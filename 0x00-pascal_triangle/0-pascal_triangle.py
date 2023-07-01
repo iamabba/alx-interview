@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
-# This is a function to generate Pascal's triangle up to the specified row number.
+''' This is a function to generate Pascal's triangle
+up to the specified row number.'''
 
 def pascal_triangle(n):
     # If the input is less than or equal to 0, return an empty list
