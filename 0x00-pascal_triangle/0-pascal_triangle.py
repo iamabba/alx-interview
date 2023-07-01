@@ -1,29 +1,29 @@
 #!/usr/bin/python3
-
-''' This is a function to generate Pascal's triangle
-up to the specified row number.'''
+""" Module for Pascal's triangle """
 
 
 def pascal_triangle(n):
-    # If the input is less than or equal to 0, return an empty list
+    """ Returns list of lists of ints representing Pascal’s triangle of n """
+
     if n <= 0:
         return []
 
-    # Create an initial row with a single element, 1
-    triangle = [[1]]
+    pascal = [[1]]
+    if n == 1:
+        return pascal
 
-    # Continue generating rows until the desired row number is reached
-    while len(triangle) < n:
-        # Get the previous row
-        prev_row = triangle[-1]
-
-        # Generate a new row by summing adjacent elements from the previous row
-        new_row = [1] + [
-            prev_row[i] + prev_row[i + 1]
-            for i in range(len(prev_row) - 1)
-        ] + [1]
-
-        # Append the new row to the triangle
-        triangle.append(new_row)
-
-    return triangle
+    for i in range(1, n):
+        left = -1
+        right = 0
+        in_pas = []
+        for j in range(i+1):
+            num = 0
+            if left > -1:
+                num += pascal[i - 1][left]
+            if right < i:
+                num += pascal[i - 1][right]
+            left += 1
+            right += 1
+            in_pas.append(num)
+        pascal.append(in_pas)
+    return pascal
