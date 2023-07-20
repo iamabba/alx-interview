@@ -1,50 +1,43 @@
-#!/usr/bin/python3
-"""
-log parsing
-"""
-
 import sys
-import re
 
+def print_statistics(stats):
+    print("File size:", stats["total_size"])
+    for status_code in sorted(stats["status_codes"]):
+        if status_code in ["200", "301", "400", "401", "403", "404", "405", "500"]:
+            print(f"{status_code}: {stats['status_codes'][status_code]}")
 
-def output(log: dict) -> None:
-    """
-    helper function to display stats
-    """
-    print("File size: {}".format(log["file_size"]))
-    for code in sorted(log["code_frequency"]):
-        if log["code_frequency"][code]:
-            print("{}: {}".format(code, log["code_frequency"][code]))
+def compute_metrics():
+    stats = {
+        "total_size": 0,
+        "status_codes": {
+            "200": 0,
+            "301": 0,
+            "400": 0,
+            "401": 0,
+            "403": 0,
+            "404": 0,
+            "405": 0,
+            "500": 0
+        }
+    }
+    try:
+        line_count = 0
+        for line in sys.stdin:
+            line_count += 1
+            line = line.strip()
+            parts = line.split()
+            if len(parts) >= 7 and parts[5].startswith("GET") and parts[6].isdigit():
+                status_code = parts[6]
+                file_size = int(parts[7])
+                stats["total_size"] += file_size
+                if status_code in stats["status_codes"]:
+                    stats["status_codes"][status_code] += 1
 
+            if line_count % 10 == 0:
+                print_statistics(stats)
+
+    except KeyboardInterrupt:
+        print_statistics(stats)
 
 if __name__ == "__main__":
-    regex = re.compile(
-    r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3} - \[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d+\] "GET /projects/260 HTTP/1.1" (.{3}) (\d+)')  # nopep8
-
-    line_count = 0
-    log = {}
-    log["file_size"] = 0
-    log["code_frequency"] = {
-        str(code): 0 for code in [
-            200, 301, 400, 401, 403, 404, 405, 500]}
-
-    try:
-        for line in sys.stdin:
-            line = line.strip()
-            match = regex.fullmatch(line)
-            if (match):
-                line_count += 1
-                code = match.group(1)
-                file_size = int(match.group(2))
-
-                # File size
-                log["file_size"] += file_size
-
-                # status code
-                if (code.isdecimal()):
-                    log["code_frequency"][code] += 1
-
-                if (line_count % 10 == 0):
-                    output(log)
-    finally:
-        output(log)
+    compute_metrics()
