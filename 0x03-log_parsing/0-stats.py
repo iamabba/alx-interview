@@ -1,43 +1,50 @@
-import sys
+#!/usr/bin/python3
+"""
+Reads stdin line by line and computes metrics:
 
-def print_statistics(stats):
-    print("File size:", stats["total_size"])
-    for status_code in sorted(stats["status_codes"]):
-        if status_code in ["200", "301", "400", "401", "403", "404", "405", "500"]:
-            print(f"{status_code}: {stats['status_codes'][status_code]}")
+Input format: <IP Address> - [<date>] "GET /projects/260 HTTP/1.1"
+<status code> <file size>
+After every 10 lines and/or a keyboard interruption (CTRL + C), print these
+statistics from the beginning:
+    Total file size: File size: <total size>
+    where <total size> is the sum of all previous <file size>
+    (see input format above)
+    Number of lines by status code:
+        possible status code: 200, 301, 400, 401, 403, 404, 405 and 500
+        if a status code doesn’t appear, don’t print anything for this status
+        code
+        format: <status code>: <number>
+        status codes should be printed in ascending order
+"""
+from sys import stdin
 
-def compute_metrics():
-    stats = {
-        "total_size": 0,
-        "status_codes": {
-            "200": 0,
-            "301": 0,
-            "400": 0,
-            "401": 0,
-            "403": 0,
-            "404": 0,
-            "405": 0,
-            "500": 0
-        }
-    }
-    try:
-        line_count = 0
-        for line in sys.stdin:
-            line_count += 1
-            line = line.strip()
-            parts = line.split()
-            if len(parts) >= 7 and parts[5].startswith("GET") and parts[6].isdigit():
-                status_code = parts[6]
-                file_size = int(parts[7])
-                stats["total_size"] += file_size
-                if status_code in stats["status_codes"]:
-                    stats["status_codes"][status_code] += 1
 
-            if line_count % 10 == 0:
-                print_statistics(stats)
+size = 0
+code = {"200": 0, "301": 0, "400": 0, "401": 0,
+        "403": 0, "404": 0, "405": 0, "500": 0}
 
-    except KeyboardInterrupt:
-        print_statistics(stats)
 
-if __name__ == "__main__":
-    compute_metrics()
+def print_stats(size: int, codes: dict) -> None:
+    """
+    Prints stats from logs
+    """
+    print("File size: {}".format(size))
+    for key in sorted(codes.keys()):
+        if codes[key] != 0:
+            print("{}: {}".format(key, codes[key]))
+
+
+try:
+    for i, log in enumerate(stdin, 1):
+        line = log.split(' ')
+        if len(line) > 2:
+            status = line[-2]
+            f_size = int(line[-1])
+
+            size += f_size
+            if status in code.keys():
+                code[status] += 1
+            if i % 10 == 0:
+                print_stats(size, code)
+finally:
+    print_stats(size, code)
